@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -147,19 +147,22 @@ function TripStatus() {
     isPaid: true,
     isConfirmed: true,
   });
-  const [status, setStatus] = useState("");
 
-  useEffect(() => {
-    const today = new Date();
-    const start = new Date(trip.startDate);
-    const end = new Date(trip.endDate);
+  const today = new Date();
+  const start = new Date(trip.startDate);
+  const end = new Date(trip.endDate);
 
-    if (!trip.isPaid) setStatus("Payment Pending");
-    else if (!trip.isConfirmed) setStatus("Awaiting Confirmation");
-    else if (today < start) setStatus("Upcoming");
-    else if (today >= start && today <= end) setStatus("In Progress");
-    else setStatus("Completed");
-  }, [trip]);
+  if (!trip.isPaid) {
+    var status = "Payment Pending";
+  } else if (!trip.isConfirmed) {
+    var status = "Awaiting Confirmation";
+  } else if (today < start) {
+    var status = "Upcoming";
+  } else if (today >= start && today <= end) {
+    var status = "In Progress";
+  } else {
+    var status = "Completed";
+  }
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -202,15 +205,12 @@ function SearchResults() {
     { id: 3, name: "City Hotel", price: 180, rating: 4.7 },
   ]);
   const [sortBy, setSortBy] = useState("price");
-  const [sortedResults, setSortedResults] = useState<typeof searchResults>([]);
 
-  useEffect(() => {
-    const sorted = [...searchResults].sort((a, b) => {
-      if (sortBy === "price") return a.price - b.price;
-      return b.rating - a.rating;
-    });
-    setSortedResults(sorted);
-  }, [searchResults, sortBy]);
+  const sorted = [...searchResults].sort((a, b) => {
+    if (sortBy === "price") return a.price - b.price;
+    return b.rating - a.rating;
+  });
+  const sortedResults = sorted;
 
   return (
     <Card>
@@ -258,37 +258,36 @@ function SearchResults() {
 // Example 6: Booking Timer
 function BookingTimer() {
   const [timeLeft, setTimeLeft] = useState(300);
-  const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
+  const timerIdRef = useRef<NodeJS.Timeout | null>(null);
 
   const startTimer = () => {
-    if (timerId) clearInterval(timerId);
+    if (timerIdRef.current) clearInterval(timerIdRef.current);
 
     const id = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(id);
-          setTimerId(null); // ❌ Unnecessary re-render
+          timerIdRef.current = null; // ❌ Unnecessary re-render
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-
-    setTimerId(id); // ❌ Unnecessary re-render
+    timerIdRef.current = id;
   };
 
   const stopTimer = () => {
-    if (timerId) {
-      clearInterval(timerId);
-      setTimerId(null); // ❌ Unnecessary re-render
+    if (timerIdRef.current) {
+      clearInterval(timerIdRef.current);
+      timerIdRef.current = null; // ❌ Unnecessary re-render
     }
   };
 
   useEffect(() => {
     return () => {
-      if (timerId) clearInterval(timerId);
+      if (timerIdRef.current) clearInterval(timerIdRef.current);
     };
-  }, [timerId]); // ❌ Effect runs every time timerId changes
+  }, []); // ❌ Effect runs every time timerId changes
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -331,15 +330,15 @@ function HotelGallery() {
     "hotel-pool.jpg",
     "hotel-restaurant.jpg",
   ]);
-  const [lastScrollPosition, setLastScrollPosition] = useState(0);
+  const lastScrollPosition = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
       const currentPosition = window.scrollY;
 
-      setLastScrollPosition(currentPosition);
+      lastScrollPosition.current = currentPosition;
 
-      if (currentPosition > lastScrollPosition) {
+      if (currentPosition > lastScrollPosition.current) {
         console.log("Scrolling down");
       } else {
         console.log("Scrolling up");
@@ -348,7 +347,7 @@ function HotelGallery() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollPosition]); // ❌ Effect re-runs on every scroll
+  }, []); // ❌ Effect re-runs on every scroll
 
   return (
     <Card>
@@ -371,7 +370,7 @@ function HotelGallery() {
           ))}
         </div>
         <div className="mt-4 text-xs text-muted-foreground">
-          Debug: Last scroll position: {lastScrollPosition}px
+          Debug: Last scroll position: {lastScrollPosition.current}px
         </div>
       </CardContent>
     </Card>
@@ -384,15 +383,15 @@ function FlightSearch() {
   const [searchResults, setSearchResults] = useState<
     Array<{ id: number; flight: string; price: number }>
   >([]);
-  const [searchCount, setSearchCount] = useState(0);
-  const [lastSearchTime, setLastSearchTime] = useState<number | null>(null);
+  const searchCountRef = useRef(0);
+  const lastSearchTimeRef = useRef<number | null>(null);
 
   const handleSearch = async () => {
     const now = Date.now();
 
     // Track search analytics (doesn't affect UI)
-    setSearchCount((prev) => prev + 1); // ❌ Unnecessary re-render
-    setLastSearchTime(now); // ❌ Unnecessary re-render
+    searchCountRef.current += 1; // ❌ Unnecessary re-render
+    lastSearchTimeRef.current = now; // ❌ Unnecessary re-render
 
     // Simulate API call
     setTimeout(() => {
@@ -403,7 +402,7 @@ function FlightSearch() {
     }, 1000);
 
     // Analytics logic that doesn't need to trigger re-renders
-    if (lastSearchTime && now - lastSearchTime < 1000) {
+    if (lastSearchTimeRef.current && now - lastSearchTimeRef.current < 1000) {
       console.log("User is searching too quickly");
     }
   };
@@ -440,7 +439,8 @@ function FlightSearch() {
         )}
 
         <div className="text-xs text-muted-foreground border-t pt-2">
-          Debug: Search count: {searchCount}, Last search: {lastSearchTime}
+          Debug: Search count: {searchCountRef.current}, Last search:{" "}
+          {lastSearchTimeRef.current}
         </div>
       </CardContent>
     </Card>
