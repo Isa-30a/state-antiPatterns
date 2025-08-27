@@ -472,14 +472,13 @@ function HotelSelection() {
       amenities: ["WiFi", "Pool", "Beach Access"],
     },
   ]);
-  const [selectedHotel, setSelectedHotel] = useState<(typeof hotels)[0] | null>(
-    null
-  );
+  const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
 
-  const handleHotelSelect = (hotel: (typeof hotels)[0]) => {
-    setSelectedHotel(hotel);
+  const handleHotelSelect = (hotel: string) => {
+    setSelectedHotelId(hotel);
   };
 
+  const selectedHotel = hotels.find((hotel) => hotel.id === selectedHotelId);
   return (
     <Card>
       <CardHeader>
@@ -491,11 +490,11 @@ function HotelSelection() {
             <div
               key={hotel.id}
               className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                selectedHotel?.id === hotel.id
+                selectedHotelId === hotel.id
                   ? "border-primary bg-primary/5"
                   : "hover:bg-accent"
               }`}
-              onClick={() => handleHotelSelect(hotel)}
+              onClick={() => handleHotelSelect(hotel.id)}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -556,19 +555,6 @@ function TravelPreferences() {
       accommodationType: "hotel",
     },
   });
-
-  const [userName, setUserName] = useState("");
-  const [userEmail, setUserEmail] = useState("");
-  const [userBudget, setUserBudget] = useState("");
-  const [userTravelStyle, setUserTravelStyle] = useState("");
-
-  useEffect(() => {
-    setUserName(userProfile.name);
-    setUserEmail(userProfile.email);
-    setUserBudget(userProfile.preferences.budget);
-    setUserTravelStyle(userProfile.preferences.travelStyle);
-  }, [userProfile]);
-
   return (
     <Card>
       <CardHeader>
@@ -602,16 +588,16 @@ function TravelPreferences() {
             </Label>
             <div className="mt-1 space-y-1 text-sm">
               <p>
-                <strong>Name:</strong> {userName}
+                <strong>Name:</strong> {userProfile.name}
               </p>
               <p>
-                <strong>Email:</strong> {userEmail}
+                <strong>Email:</strong> {userProfile.email}
               </p>
               <p>
-                <strong>Budget:</strong> {userBudget}
+                <strong>Budget:</strong> {userProfile.preferences.budget}
               </p>
               <p>
-                <strong>Style:</strong> {userTravelStyle}
+                <strong>Style:</strong> {userProfile.preferences.travelStyle}
               </p>
             </div>
           </div>
